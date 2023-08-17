@@ -28,6 +28,10 @@ class CrewSerializer(serializers.ModelSerializer):
         fields = ["id", "first_name", "last_name", "role"]
 
 
+class CrewListSerializer(CrewSerializer):
+    role = RoleSerializer(many=False, read_only=True)
+
+
 class CountrySerializer(serializers.ModelSerializer):
 
     class Meta:
@@ -42,11 +46,26 @@ class AirportSerializer(serializers.ModelSerializer):
         fields = ["id", "name", "closest_big_city", "country"]
 
 
+class AirportListSerializer(AirportSerializer):
+    country = CountrySerializer(many=False, read_only=True)
+
+
 class RouteSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Route
-        fields = ["id", "source", "destination", "distance", "route_name"]
+        fields = ["id", "source", "destination", "distance"]
+
+class RouteListSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = Route
+        fields = ["id", "route_name", "distance"]
+
+
+class RouteRetrieveSerializer(RouteSerializer):
+    source = AirportListSerializer(many=False, read_only=True)
+    destination = AirportListSerializer(many=False, read_only=True)
 
 
 class AirplaneTypeSerializer(serializers.ModelSerializer):

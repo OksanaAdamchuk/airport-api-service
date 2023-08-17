@@ -25,7 +25,7 @@ class Crew(models.Model):
 
 
 class Country(models.Model):
-    name = models.CharField(max_length=255)
+    name = models.CharField(max_length=255, unique=True)
 
     class Meta:
         verbose_name_plural = "countries"
@@ -43,7 +43,7 @@ class Airport(models.Model):
         ordering = ["name"]
     
     def __str__(self) -> str:
-        return f"{self.name} (near {self.closest_big_city})"
+        return f"{self.name} ({self.country})"
     
 
 class Route(models.Model):
@@ -59,7 +59,7 @@ class Route(models.Model):
         ordering = ["source", "destination"]
     
     def __str__(self) -> str:
-        return f"{self.source}-{self.destination}"
+        return self.route_name
     
 
 class AirplaneType(models.Model):
