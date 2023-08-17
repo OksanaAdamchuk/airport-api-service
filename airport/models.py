@@ -17,11 +17,15 @@ class Crew(models.Model):
     last_name = models.CharField(max_length=255)
     role = models.ForeignKey(Role, on_delete=models.PROTECT, related_name="crews")
 
+    @property
+    def full_name(self) -> str:
+        return f"{self.first_name} {self.last_name}"
+    
     class Meta:
         ordering = ["role", "last_name"]
 
     def __str__(self) -> str:
-        return f"{self.first_name} {self.last_name}"
+        return f"{self.first_name} {self.last_name} ({self.role})"
 
 
 class Country(models.Model):
