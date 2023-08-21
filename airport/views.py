@@ -95,7 +95,7 @@ class AirportViewSet(viewsets.ModelViewSet):
 
 
 class RouteViewSet(viewsets.ModelViewSet):
-    queryset = Route.objects.all()
+    queryset = Route.objects.select_related("source__country").select_related("destination__country")
     serializer_class = RouteSerializer
     permission_classes = (IsAdminOrReadOnly, )
 
@@ -121,7 +121,7 @@ class AirplaneViewSet(viewsets.ModelViewSet):
     permission_classes = (IsAdminOrReadOnly, )
 
     def get_queryset(self):
-        queryset = self.queryset.all()
+        queryset = self.queryset.select_related("airplane_type")
 
         name = self.request.query_params.get("name")
 
@@ -155,7 +155,12 @@ class FlightViewSet(viewsets.ModelViewSet):
     permission_classes = (IsAdminOrReadOnly, )
 
     def get_queryset(self):
-        queryset = self.queryset.prefetch_related("crews")
+        queryset = (
+            self.queryset.prefetch_related("crews__role")
+            .select_related("route__source__country")
+            .select_related("route__destination__country")
+            .select_related("airplane")
+        )
 
         route = self.request.query_params.get("route")
 
@@ -207,7 +212,12 @@ class OrderViewSet(
     permission_classes = (IsAuthenticated, )
 
     def get_queryset(self):
-        queryset = self.queryset.filter(user=self.request.user).prefetch_related("tickets__flight__airplane")
+        queryset = (
+            self.queryset.filter(user=self.request.user)
+            .prefetch_related("tickets__flight__route__destination__country")
+            .prefetch_related("tickets__flight__route__source__country")
+            .prefetch_related("tickets__flight__airplane")
+        )
 
         return queryset
 
