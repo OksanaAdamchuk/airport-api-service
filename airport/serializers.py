@@ -131,6 +131,15 @@ class FlightSerializer(serializers.ModelSerializer):
         fields = ["id", "route", "airplane", "departure_time", "arrival_time", "crews"]
 
 
+class FlightInfoSerializer(serializers.ModelSerializer):
+    route = serializers.SlugRelatedField(many=False, read_only=True, slug_field="route_name")
+    airplane = serializers.SlugRelatedField(many=False, read_only=True, slug_field="name")
+
+    class Meta:
+        model = Flight
+        fields = ["route", "airplane", "departure_time", "arrival_time"]
+
+
 class FlightRetrieveSerializer(serializers.ModelSerializer):
     route = RouteListSerializer(many=False, read_only=True)
     airplane = AirplaneSerializer(many=False, read_only=True)
@@ -153,6 +162,10 @@ class FlightListSerializer(serializers.ModelSerializer):
         fields = ["id", "route", "airplane", "departure_time", "arrival_time", "crews", "tickets_available"]
 
 
+class TicketInfoSerializer(TicketSerializer):
+    flight = FlightInfoSerializer(many=False, read_only=True)
+
+
 class OrderSerializer(serializers.ModelSerializer):
     tickets = TicketSerializer(many=True, read_only=False, allow_empty=False)
 
@@ -169,4 +182,6 @@ class OrderSerializer(serializers.ModelSerializer):
 
             return order
 
-# create order detail and list serializers
+
+class OrderListSerializer(OrderSerializer):
+    tickets = TicketInfoSerializer(many=True, read_only=True)
