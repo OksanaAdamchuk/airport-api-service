@@ -1,5 +1,6 @@
 from django.shortcuts import render
 from rest_framework import viewsets
+from django.db.models import Count, F
 
 from airport.models import (
     Airplane,
@@ -95,8 +96,29 @@ class AirplaneViewSet(viewsets.ModelViewSet):
 
 
 class FlightViewSet(viewsets.ModelViewSet):
-    queryset = Flight.objects.prefetch_related("crews")
+    queryset = Flight.objects.all()
     serializer_class = FlightSerializer
+
+    def get_queryset(self):
+        queryset = self.queryset.prefetch_related("crews")
+
+        route = self.request.query_params.get("route")
+
+        if route:
+            route_id = int(route)
+            queryset = queryset.filter(route__id=route_id)
+
+        if self.action == "list":
+            queryset = (
+                queryset.
+                annotate(
+                    tickets_available=(
+                        (F("airplane__rows") * F("airplane__seats_in_row")) - Count("tickets")
+                    )
+                )
+            )
+
+        return queryset
 
     def get_serializer_class(self):
         if self.action == "retrieve":
@@ -111,8 +133,8 @@ class OrderViewSet(viewsets.ModelViewSet):
     queryset = Order.objects.all()
     serializer_class = OrderSerializer
 
+    def get_queryset(self):
+        return self.queryset.filter(user=self.request.user)
 
-class TicketViewSet(viewsets.ModelViewSet):
-    queryset = Ticket.objects.all()
-    serializer_class = TicketSerializer
-
+    def perform_create(self, serializer):
+        serializer.save(user=self.request.user)

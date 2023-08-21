@@ -1,5 +1,8 @@
+from types import NoneType
+from typing import Iterable, Optional
 from django.db import models
 from django.conf import settings
+from django.forms import ValidationError
 
 
 class Role(models.Model):
@@ -140,3 +143,33 @@ class Ticket(models.Model):
         return (
             f"{str(self.flight)} (row: {self.row}, seat: {self.seat})"
         )
+
+    @staticmethod
+    def validate_seat(seat: int, num_seats: int, error_to_raise):
+        if not (1 <= seat <= num_seats):
+            raise error_to_raise({
+                "seat": ("seat must be in range "
+                        f"[1, {num_seats}], not {seat}")
+            })
+
+    @staticmethod
+    def validate_row(row: int, num_rows: int, error_to_raise):
+        if not (1 <= row <= num_rows):
+            raise error_to_raise({
+                "row": ("row must be in range "
+                        f"[1, {num_rows}], not {row}")
+            })
+    
+    def clean(self) -> None:
+        Ticket.validate_row(self.row, self.flight.airplane.rows, ValidationError)
+        Ticket.validate_seat(self.seat, self.flight.airplane.seats_in_row, ValidationError)
+
+    def save(
+        self,
+        force_insert: False,
+        force_update: False,
+        using: None,
+        update_fields: None
+    ) -> None:
+        self.full_clean()
+        return super(Ticket, self).save(force_insert, force_update, using, update_fields)
