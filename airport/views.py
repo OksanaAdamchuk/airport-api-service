@@ -1,6 +1,7 @@
 from django.shortcuts import render
 from rest_framework import viewsets
 from django.db.models import Count, F
+from drf_spectacular.utils import extend_schema, OpenApiParameter
 
 from airport.models import (
     Airplane,
@@ -119,6 +120,18 @@ class FlightViewSet(viewsets.ModelViewSet):
             )
 
         return queryset
+    
+    @extend_schema(
+        parameters=[
+            OpenApiParameter(
+                "route",
+                type={"type": "number"},
+                description="Filter by route id (example: ?route=1)",
+            ),
+        ]
+    )
+    def list(self, request, *args, **kwargs):
+        return super().list(request, *args, **kwargs)
 
     def get_serializer_class(self):
         if self.action == "retrieve":
