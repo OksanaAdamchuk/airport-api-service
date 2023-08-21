@@ -47,7 +47,7 @@ class Airport(models.Model):
     country = models.ForeignKey(Country, on_delete=models.CASCADE, related_name="airports")
     
     class Meta:
-        ordering = ["name"]
+        ordering = ["-country", "name"]
     
     def __str__(self) -> str:
         return f"{self.name} ({self.country})"
