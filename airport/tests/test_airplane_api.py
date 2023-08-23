@@ -133,7 +133,7 @@ class AdminUserAirplaneApiTest(TestCase):
 
         self.assertEqual(res.status_code, status.HTTP_201_CREATED)
         for key in payload:
-            if key == 'airplane_type':
+            if key == "airplane_type":
                 self.assertEqual(payload[key], airplane.airplane_type.id)
             else:
                 self.assertEqual(payload[key], getattr(airplane, key))
@@ -151,7 +151,7 @@ class AdminUserAirplaneApiTest(TestCase):
 
         self.assertEqual(res.status_code, status.HTTP_200_OK)
         for key in payload:
-            if key == 'airplane_type':
+            if key == "airplane_type":
                 self.assertEqual(payload[key], airplane.airplane_type.id)
             else:
                 self.assertEqual(payload[key], getattr(airplane, key))
