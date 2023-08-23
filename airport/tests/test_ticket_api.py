@@ -5,11 +5,22 @@ from django.contrib.auth import get_user_model
 from rest_framework.test import APIClient
 from rest_framework import status
 
-from airport.models import Airplane, AirplaneType, Airport, Country, Crew, Flight, Order, Role, Route, Ticket
+from airport.models import (
+    Airplane,
+    AirplaneType,
+    Airport,
+    Country,
+    Crew,
+    Flight,
+    Order,
+    Role,
+    Route,
+    Ticket,
+)
 from airport.serializers import OrderListSerializer
 
 
-class PrivateTicketTest(TestCase):
+class PrivateTicketApiTest(TestCase):
     def setUp(self) -> None:
         self.client = APIClient()
         self.user = get_user_model().objects.create_user(
@@ -22,7 +33,7 @@ class PrivateTicketTest(TestCase):
             name="Test Boeing",
             rows=10,
             seats_in_row=6,
-            airplane_type=self.airplane_type
+            airplane_type=self.airplane_type,
         )
 
         self.country1 = Country.objects.create(name="Ukraine")
@@ -30,28 +41,20 @@ class PrivateTicketTest(TestCase):
         self.airport1 = Airport.objects.create(
             name="Test Ukrainian Airport",
             closest_big_city="Kyiv",
-            country=self.country1
+            country=self.country1,
         )
         self.airport2 = Airport.objects.create(
-            name="Test Polish Airport",
-            closest_big_city="Krakow",
-            country=self.country2
+            name="Test Polish Airport", closest_big_city="Krakow", country=self.country2
         )
         self.route1 = Route.objects.create(
-            source=self.airport1,
-            destination=self.airport2,
-            distance=500
+            source=self.airport1, destination=self.airport2, distance=500
         )
         self.route2 = Route.objects.create(
-            source=self.airport2,
-            destination=self.airport1,
-            distance=500
+            source=self.airport2, destination=self.airport1, distance=500
         )
         self.role = Role.objects.create(name="pilot")
         self.crew = Crew.objects.create(
-            first_name="TestName",
-            last_name="TestSurname",
-            role=self.role
+            first_name="TestName", last_name="TestSurname", role=self.role
         )
         self.flight1 = Flight.objects.create(
             route=self.route1,
@@ -69,10 +72,7 @@ class PrivateTicketTest(TestCase):
         self.flight2.crews.add(self.crew)
         self.order1 = Order.objects.create(user=self.user)
         self.ticket1 = Ticket.objects.create(
-            row=9,
-            seat=6,
-            flight=self.flight1,
-            order=self.order1
+            row=9, seat=6, flight=self.flight1, order=self.order1
         )
 
     def test_ticket_in_order(self) -> None:
@@ -80,7 +80,7 @@ class PrivateTicketTest(TestCase):
         res = self.client.get(url)
 
         serializer = OrderListSerializer(self.order1)
-        
+
         self.assertEqual(res.status_code, status.HTTP_200_OK)
         self.assertIn("tickets", res.data)
         self.assertEqual(serializer.data["tickets"], res.data["tickets"])
@@ -93,37 +93,40 @@ class PrivateTicketTest(TestCase):
             ]
         }
         res = self.client.post(reverse("airport:order-list"), payload, format="json")
-        ticket1_id = res.data['tickets'][0]['id']
-        ticket2_id = res.data['tickets'][1]['id']
+        ticket1_id = res.data["tickets"][0]["id"]
+        ticket2_id = res.data["tickets"][1]["id"]
 
         self.assertEqual(res.status_code, status.HTTP_201_CREATED)
-        
+
         created_ticket1 = Ticket.objects.get(pk=ticket1_id)
         created_ticket2 = Ticket.objects.get(pk=ticket2_id)
         self.assertTrue(created_ticket1)
         self.assertTrue(created_ticket2)
-        
+
         self.assertEqual(
             created_ticket1.order.created_at.replace(microsecond=0),
-            self.order1.created_at.replace(microsecond=0)
+            self.order1.created_at.replace(microsecond=0),
         )
         self.assertEqual(
             created_ticket2.order.created_at.replace(microsecond=0),
-            self.order1.created_at.replace(microsecond=0)
+            self.order1.created_at.replace(microsecond=0),
         )
 
         new_order = Order.objects.latest("created_at")
         self.assertEqual(new_order.user, self.user)
 
-    def test_add_ticket_with_taken_seat(self) -> None:
+    def test_add_ticket_with_taken_seat_not_allowed(self) -> None:
         payload = {
             "tickets": [
                 {"row": 9, "seat": 6, "flight": self.flight1.id},
             ]
         }
+        initial_order_count = Order.objects.count()
         res = self.client.post(reverse("airport:order-list"), payload, format="json")
 
         self.assertEqual(res.status_code, status.HTTP_400_BAD_REQUEST)
+
+        self.assertEqual(Order.objects.count(), initial_order_count)
 
     def test_add_ticket_with_taken_seat_but_for_other_flight(self) -> None:
         payload = {

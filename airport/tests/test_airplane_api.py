@@ -10,6 +10,7 @@ from airport.serializers import AirplaneListSerializer
 
 AIRPLANES_URL = reverse("airport:airplane-list")
 
+
 class PublicAirplaneApiTest(TestCase):
     def setUp(self) -> None:
         self.client = APIClient()
@@ -19,13 +20,13 @@ class PublicAirplaneApiTest(TestCase):
             name="Test Boeing",
             rows=10,
             seats_in_row=6,
-            airplane_type=self.airplane_type
+            airplane_type=self.airplane_type,
         )
         self.airplane2 = Airplane.objects.create(
             name="Test Airbus",
             rows=10,
             seats_in_row=6,
-            airplane_type=self.airplane_type
+            airplane_type=self.airplane_type,
         )
 
     def test_list_airplanes(self) -> None:
@@ -59,7 +60,7 @@ class PublicAirplaneApiTest(TestCase):
             "name": "New Boeing",
             "rows": 12,
             "seats_in_row": 9,
-            "airplane_type": self.airplane_type
+            "airplane_type": self.airplane_type,
         }
         res = self.client.post(AIRPLANES_URL, data)
 
@@ -85,7 +86,7 @@ class PrivateAirplaneApiTest(TestCase):
             name="Test Boeing",
             rows=10,
             seats_in_row=6,
-            airplane_type=self.airplane_type
+            airplane_type=self.airplane_type,
         )
 
     def test_create_airplane_forbidden(self) -> None:
@@ -93,7 +94,7 @@ class PrivateAirplaneApiTest(TestCase):
             "name": "New Boeing",
             "rows": 12,
             "seats_in_row": 9,
-            "airplane_type": self.airplane_type
+            "airplane_type": self.airplane_type,
         }
         res = self.client.post(AIRPLANES_URL, data)
 
@@ -104,6 +105,7 @@ class PrivateAirplaneApiTest(TestCase):
         res = self.client.delete(url)
 
         self.assertEqual(res.status_code, status.HTTP_403_FORBIDDEN)
+
 
 class AdminUserAirplaneApiTest(TestCase):
     def setUp(self) -> None:
@@ -118,7 +120,7 @@ class AdminUserAirplaneApiTest(TestCase):
             name="Test Boeing",
             rows=10,
             seats_in_row=6,
-            airplane_type=self.airplane_type
+            airplane_type=self.airplane_type,
         )
 
     def test_create_airplane(self) -> None:
@@ -126,7 +128,7 @@ class AdminUserAirplaneApiTest(TestCase):
             "name": "New Boeing",
             "rows": 12,
             "seats_in_row": 9,
-            "airplane_type": self.airplane_type.id
+            "airplane_type": self.airplane_type.id,
         }
         res = self.client.post(AIRPLANES_URL, payload)
         airplane = Airplane.objects.get(pk=res.data["id"])
@@ -143,7 +145,7 @@ class AdminUserAirplaneApiTest(TestCase):
             "name": "Changed Boeing",
             "rows": 12,
             "seats_in_row": 9,
-            "airplane_type": self.airplane_type.id
+            "airplane_type": self.airplane_type.id,
         }
         url = reverse("airport:airplane-detail", args=[self.airplane1.id])
         res = self.client.patch(url, payload)

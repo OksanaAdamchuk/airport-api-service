@@ -4,11 +4,12 @@ from django.contrib.auth import get_user_model
 from rest_framework.test import APIClient
 from rest_framework import status
 
-from airport.models import Airplane, AirplaneType, Airport, Country
-from airport.serializers import AirplaneListSerializer, AirportListSerializer
+from airport.models import Airport, Country
+from airport.serializers import AirportListSerializer
 
 
 AIRPORTS_URL = reverse("airport:airport-list")
+
 
 class PublicAirportApiTest(TestCase):
     def setUp(self) -> None:
@@ -19,17 +20,13 @@ class PublicAirportApiTest(TestCase):
         self.airport1 = Airport.objects.create(
             name="Test Ukrainian Airport",
             closest_big_city="Kyiv",
-            country=self.country1
+            country=self.country1,
         )
         self.airport2 = Airport.objects.create(
-            name="Test Polish Airport",
-            closest_big_city="Krakow",
-            country=self.country2
+            name="Test Polish Airport", closest_big_city="Krakow", country=self.country2
         )
         self.airport3 = Airport.objects.create(
-            name="New Polish Airport",
-            closest_big_city="Warsaw",
-            country=self.country2
+            name="New Polish Airport", closest_big_city="Warsaw", country=self.country2
         )
 
     def test_list_airports(self) -> None:
@@ -64,7 +61,7 @@ class PublicAirportApiTest(TestCase):
         data = {
             "name": "Ukrainian Airport",
             "closest_big_city": "Lviv",
-            "country": self.country1
+            "country": self.country1,
         }
         res = self.client.post(AIRPORTS_URL, data)
 
@@ -89,14 +86,14 @@ class PrivateAirportApiTest(TestCase):
         self.airport1 = Airport.objects.create(
             name="Test Ukrainian Airport",
             closest_big_city="Kyiv",
-            country=self.country1
+            country=self.country1,
         )
 
     def test_create_airport_not_allowed(self) -> None:
         data = {
             "name": "Ukrainian Airport",
             "closest_big_city": "Lviv",
-            "country": self.country1.id
+            "country": self.country1.id,
         }
         res = self.client.post(AIRPORTS_URL, data)
 
@@ -107,6 +104,7 @@ class PrivateAirportApiTest(TestCase):
         res = self.client.delete(url)
 
         self.assertEqual(res.status_code, status.HTTP_403_FORBIDDEN)
+
 
 class AdminUserAirportApiTest(TestCase):
     def setUp(self) -> None:
@@ -120,14 +118,14 @@ class AdminUserAirportApiTest(TestCase):
         self.airport1 = Airport.objects.create(
             name="Test Ukrainian Airport",
             closest_big_city="Kyiv",
-            country=self.country1
+            country=self.country1,
         )
 
     def test_create_airport(self) -> None:
         payload = {
             "name": "Ukrainian Airport",
             "closest_big_city": "Lviv",
-            "country": self.country1.id
+            "country": self.country1.id,
         }
         res = self.client.post(AIRPORTS_URL, payload)
         airport = Airport.objects.get(pk=res.data["id"])
@@ -143,7 +141,7 @@ class AdminUserAirportApiTest(TestCase):
         payload = {
             "name": "Next Airport",
             "closest_big_city": "Lviv",
-            "country": self.country1.id
+            "country": self.country1.id,
         }
         url = reverse("airport:airport-detail", args=[self.airport1.id])
         res = self.client.patch(url, payload)
