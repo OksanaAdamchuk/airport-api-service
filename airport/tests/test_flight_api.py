@@ -15,7 +15,7 @@ from airport.models import (
     Role,
     Route,
 )
-from airport.serializers import FlightRetrieveSerializer
+from airport.serializers import FlightListSerializer, FlightRetrieveSerializer
 
 
 FLIGHTS_URL = reverse("airport:flight-list")
@@ -68,214 +68,214 @@ class PublicFlightApiTest(TestCase):
         )
         self.flight2.crews.add(self.crew)
 
-    # def test_list_flights(self) -> None:
-    #     res = self.client.get(FLIGHTS_URL)
-    #     flights = Flight.objects.all()
-    #     serializer = FlightListSerializer(flights, many=True)
+    def test_list_flights(self) -> None:
+        res = self.client.get(FLIGHTS_URL)
+        flights = Flight.objects.all()
+        serializer = FlightListSerializer(flights, many=True)
 
-    #     self.assertEqual(res.status_code, status.HTTP_200_OK)
-    #     print("Expected:")
-    #     print(res.data["results"])
-    #     print("Actual:")
-    #     print(serializer.data)
-    #     self.assertEqual(list(res.data["results"]), list(serializer.data))
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
+        print("Expected:")
+        print(res.data["results"])
+        print("Actual:")
+        print(serializer.data)
+        self.assertEqual(res.data["results"], serializer.data)
 
-    # def test_filter_flights_by_route_id(self) -> None:
-    #     res = self.client.get(FLIGHTS_URL, {"route": f"{self.route2.id}"})
+    def test_filter_flights_by_route_id(self) -> None:
+        res = self.client.get(FLIGHTS_URL, {"route": f"{self.route2.id}"})
 
-    #     serializer1 = FlightListSerializer(self.flight1)
-    #     serializer2 = FlightListSerializer(self.flight2)
+        serializer1 = FlightListSerializer(self.flight1)
+        serializer2 = FlightListSerializer(self.flight2)
 
-    #     self.assertNotIn(serializer1.data, res.data["results"])
-    #     self.assertIn(serializer2.data, res.data["results"])
+        self.assertNotIn(serializer1.data, res.data["results"])
+        self.assertIn(serializer2.data, res.data["results"])
 
-    # def test_retrieve_flight_detail(self) -> None:
-    #     url = reverse("airport:flight-detail", args=[self.flight1.id])
-    #     res = self.client.get(url)
+    def test_retrieve_flight_detail(self) -> None:
+        url = reverse("airport:flight-detail", args=[self.flight1.id])
+        res = self.client.get(url)
 
-    #     serializer = FlightRetrieveSerializer(self.flight1)
+        serializer = FlightRetrieveSerializer(self.flight1)
 
-    #     self.assertEqual(res.status_code, status.HTTP_200_OK)
-    #     self.assertEqual(serializer.data, res.data)
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
+        self.assertEqual(serializer.data, res.data)
 
-    # def test_create_flight_not_allowed(self) -> None:
-    #     data = {
-    #         "route": self.route1,
-    #         "airplane": self.airplane1,
-    #         "departure_time": datetime(2023, 8, 30, 12, 30),
-    #         "arrival_time": datetime(2023, 8, 30, 13, 30),
-    #     }
-    #     res = self.client.post(FLIGHTS_URL, data)
+    def test_create_flight_not_allowed(self) -> None:
+        data = {
+            "route": self.route1,
+            "airplane": self.airplane1,
+            "departure_time": datetime(2023, 8, 30, 12, 30),
+            "arrival_time": datetime(2023, 8, 30, 13, 30),
+        }
+        res = self.client.post(FLIGHTS_URL, data)
 
-    #     self.assertEqual(res.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(res.status_code, status.HTTP_401_UNAUTHORIZED)
 
-    # def test_delete_flight_not_allowed(self) -> None:
-    #     url = reverse("airport:flight-detail", args=[self.flight1.id])
-    #     res = self.client.delete(url)
+    def test_delete_flight_not_allowed(self) -> None:
+        url = reverse("airport:flight-detail", args=[self.flight1.id])
+        res = self.client.delete(url)
 
-    #     self.assertEqual(res.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(res.status_code, status.HTTP_401_UNAUTHORIZED)
 
 
-# class PrivateFlightApiTest(TestCase):
-#     def setUp(self) -> None:
-#         self.client = APIClient()
-#         self.user = get_user_model().objects.create_user(
-#             "admin@admin.com", "Testpassword123@"
-#         )
-#         self.client.force_authenticate(self.user)
+class PrivateFlightApiTest(TestCase):
+    def setUp(self) -> None:
+        self.client = APIClient()
+        self.user = get_user_model().objects.create_user(
+            "admin@admin.com", "Testpassword123@"
+        )
+        self.client.force_authenticate(self.user)
 
-#         self.airplane_type = AirplaneType.objects.create(name="test-type")
-#         self.airplane1 = Airplane.objects.create(
-#             name="Test Boeing",
-#             rows=10,
-#             seats_in_row=6,
-#             airplane_type=self.airplane_type
-#         )
-#         self.country1 = Country.objects.create(name="Ukraine")
-#         self.country2 = Country.objects.create(name="Poland")
-#         self.airport1 = Airport.objects.create(
-#             name="Test Ukrainian Airport",
-#             closest_big_city="Kyiv",
-#             country=self.country1
-#         )
-#         self.airport2 = Airport.objects.create(
-#             name="Test Polish Airport",
-#             closest_big_city="Krakow",
-#             country=self.country2
-#         )
-#         self.route1 = Route.objects.create(
-#             source=self.airport1,
-#             destination=self.airport2,
-#             distance=500
-#         )
-#         self.route2 = Route.objects.create(
-#             source=self.airport2,
-#             destination=self.airport1,
-#             distance=500
-#         )
-#         self.role = Role.objects.create(name="pilot")
-#         self.crew = Crew.objects.create(
-#             first_name="TestName",
-#             last_name="TestSurname",
-#             role=self.role
-#         )
-#         self.flight1 = Flight.objects.create(
-#             route=self.route1,
-#             airplane=self.airplane1,
-#             departure_time=datetime(2023, 8, 30, 12, 30),
-#             arrival_time=datetime(2023, 8, 30, 13, 30),
-#         )
-#         self.flight1.crews.add(self.crew)
+        self.airplane_type = AirplaneType.objects.create(name="test-type")
+        self.airplane1 = Airplane.objects.create(
+            name="Test Boeing",
+            rows=10,
+            seats_in_row=6,
+            airplane_type=self.airplane_type
+        )
+        self.country1 = Country.objects.create(name="Ukraine")
+        self.country2 = Country.objects.create(name="Poland")
+        self.airport1 = Airport.objects.create(
+            name="Test Ukrainian Airport",
+            closest_big_city="Kyiv",
+            country=self.country1
+        )
+        self.airport2 = Airport.objects.create(
+            name="Test Polish Airport",
+            closest_big_city="Krakow",
+            country=self.country2
+        )
+        self.route1 = Route.objects.create(
+            source=self.airport1,
+            destination=self.airport2,
+            distance=500
+        )
+        self.route2 = Route.objects.create(
+            source=self.airport2,
+            destination=self.airport1,
+            distance=500
+        )
+        self.role = Role.objects.create(name="pilot")
+        self.crew = Crew.objects.create(
+            first_name="TestName",
+            last_name="TestSurname",
+            role=self.role
+        )
+        self.flight1 = Flight.objects.create(
+            route=self.route1,
+            airplane=self.airplane1,
+            departure_time=datetime(2023, 8, 30, 12, 30),
+            arrival_time=datetime(2023, 8, 30, 13, 30),
+        )
+        self.flight1.crews.add(self.crew)
 
-#     def test_create_flight_forbidden(self) -> None:
-#         data = {
-#             "route": self.route1,
-#             "airplane": self.airplane1,
-#             "departure_time": datetime(2023, 8, 30, 12, 30),
-#             "arrival_time": datetime(2023, 8, 30, 13, 30),
-#         }
-#         res = self.client.post(FLIGHTS_URL, data)
+    def test_create_flight_forbidden(self) -> None:
+        data = {
+            "route": self.route1,
+            "airplane": self.airplane1,
+            "departure_time": datetime(2023, 8, 30, 12, 30),
+            "arrival_time": datetime(2023, 8, 30, 13, 30),
+        }
+        res = self.client.post(FLIGHTS_URL, data)
 
-#         self.assertEqual(res.status_code, status.HTTP_403_FORBIDDEN)
+        self.assertEqual(res.status_code, status.HTTP_403_FORBIDDEN)
 
-#     def test_delete_flight_forbidden(self) -> None:
-#         url = reverse("airport:flight-detail", args=[self.flight1.id])
-#         res = self.client.delete(url)
+    def test_delete_flight_forbidden(self) -> None:
+        url = reverse("airport:flight-detail", args=[self.flight1.id])
+        res = self.client.delete(url)
 
-#         self.assertEqual(res.status_code, status.HTTP_403_FORBIDDEN)
+        self.assertEqual(res.status_code, status.HTTP_403_FORBIDDEN)
 
-# class AdminUserFlightApiTest(TestCase):
-#     def setUp(self) -> None:
-#         self.client = APIClient()
-#         self.user = get_user_model().objects.create_user(
-#             "admin@admin.com", "Testpassword123@", is_staff=True
-#         )
-#         self.client.force_authenticate(self.user)
+class AdminUserFlightApiTest(TestCase):
+    def setUp(self) -> None:
+        self.client = APIClient()
+        self.user = get_user_model().objects.create_user(
+            "admin@admin.com", "Testpassword123@", is_staff=True
+        )
+        self.client.force_authenticate(self.user)
 
-#         self.airplane_type = AirplaneType.objects.create(name="test-type")
-#         self.airplane1 = Airplane.objects.create(
-#             name="Test Boeing",
-#             rows=10,
-#             seats_in_row=6,
-#             airplane_type=self.airplane_type
-#         )
-#         self.country1 = Country.objects.create(name="Ukraine")
-#         self.country2 = Country.objects.create(name="Poland")
-#         self.airport1 = Airport.objects.create(
-#             name="Test Ukrainian Airport",
-#             closest_big_city="Kyiv",
-#             country=self.country1
-#         )
-#         self.airport2 = Airport.objects.create(
-#             name="Test Polish Airport",
-#             closest_big_city="Krakow",
-#             country=self.country2
-#         )
-#         self.route1 = Route.objects.create(
-#             source=self.airport1,
-#             destination=self.airport2,
-#             distance=500
-#         )
-#         self.route2 = Route.objects.create(
-#             source=self.airport2,
-#             destination=self.airport1,
-#             distance=500
-#         )
-#         self.role = Role.objects.create(name="pilot")
-#         self.crew = Crew.objects.create(
-#             first_name="TestName",
-#             last_name="TestSurname",
-#             role=self.role
-#         )
-#         self.flight1 = Flight.objects.create(
-#             route=self.route1,
-#             airplane=self.airplane1,
-#             departure_time=datetime(2023, 8, 30, 12, 30),
-#             arrival_time=datetime(2023, 8, 30, 13, 30),
-#         )
-#         self.flight1.crews.add(self.crew)
+        self.airplane_type = AirplaneType.objects.create(name="test-type")
+        self.airplane1 = Airplane.objects.create(
+            name="Test Boeing",
+            rows=10,
+            seats_in_row=6,
+            airplane_type=self.airplane_type
+        )
+        self.country1 = Country.objects.create(name="Ukraine")
+        self.country2 = Country.objects.create(name="Poland")
+        self.airport1 = Airport.objects.create(
+            name="Test Ukrainian Airport",
+            closest_big_city="Kyiv",
+            country=self.country1
+        )
+        self.airport2 = Airport.objects.create(
+            name="Test Polish Airport",
+            closest_big_city="Krakow",
+            country=self.country2
+        )
+        self.route1 = Route.objects.create(
+            source=self.airport1,
+            destination=self.airport2,
+            distance=500
+        )
+        self.route2 = Route.objects.create(
+            source=self.airport2,
+            destination=self.airport1,
+            distance=500
+        )
+        self.role = Role.objects.create(name="pilot")
+        self.crew = Crew.objects.create(
+            first_name="TestName",
+            last_name="TestSurname",
+            role=self.role
+        )
+        self.flight1 = Flight.objects.create(
+            route=self.route1,
+            airplane=self.airplane1,
+            departure_time=datetime(2023, 8, 30, 12, 30),
+            arrival_time=datetime(2023, 8, 30, 13, 30),
+        )
+        self.flight1.crews.add(self.crew)
 
-#     def test_create_flight(self) -> None:
-#         payload = {
-#             "route": self.route1.id,
-#             "airplane": self.airplane1.id,
-#             "departure_time": datetime(2023, 8, 30, 12, 30, tzinfo=timezone.utc),
-#             "arrival_time": datetime(2023, 8, 30, 13, 30, tzinfo=timezone.utc),
-#         }
-#         res = self.client.post(FLIGHTS_URL, payload)
-#         flight = Flight.objects.get(pk=res.data["id"])
+    def test_create_flight(self) -> None:
+        payload = {
+            "route": self.route1.id,
+            "airplane": self.airplane1.id,
+            "departure_time": datetime(2023, 8, 30, 12, 30, tzinfo=timezone.utc),
+            "arrival_time": datetime(2023, 8, 30, 13, 30, tzinfo=timezone.utc),
+        }
+        res = self.client.post(FLIGHTS_URL, payload)
+        flight = Flight.objects.get(pk=res.data["id"])
 
-#         self.assertEqual(res.status_code, status.HTTP_201_CREATED)
-#         for key in payload:
-#             if key == "route":
-#                 self.assertEqual(payload[key], flight.route.id)
-#             elif key == "airplane":
-#                 self.assertEqual(payload[key], flight.airplane.id)
-#             else:
-#                 self.assertEqual(payload[key], getattr(flight, key))
+        self.assertEqual(res.status_code, status.HTTP_201_CREATED)
+        for key in payload:
+            if key == "route":
+                self.assertEqual(payload[key], flight.route.id)
+            elif key == "airplane":
+                self.assertEqual(payload[key], flight.airplane.id)
+            else:
+                self.assertEqual(payload[key], getattr(flight, key))
 
-#     def test_update_flight(self) -> None:
-#         payload = {
-#             "route": self.route2.id,
-#             "airplane": self.airplane1.id,
-#             "departure_time": datetime(2023, 8, 30, 12, 30, tzinfo=timezone.utc),
-#             "arrival_time": datetime(2023, 8, 30, 13, 30, tzinfo=timezone.utc),
-#         }
-#         url = reverse("airport:flight-detail", args=[self.flight1.id])
-#         res = self.client.patch(url, payload)
-#         flight = Flight.objects.get(pk=res.data["id"])
+    def test_update_flight(self) -> None:
+        payload = {
+            "route": self.route2.id,
+            "airplane": self.airplane1.id,
+            "departure_time": datetime(2023, 8, 30, 12, 30, tzinfo=timezone.utc),
+            "arrival_time": datetime(2023, 8, 30, 13, 30, tzinfo=timezone.utc),
+        }
+        url = reverse("airport:flight-detail", args=[self.flight1.id])
+        res = self.client.patch(url, payload)
+        flight = Flight.objects.get(pk=res.data["id"])
 
-#         self.assertEqual(res.status_code, status.HTTP_200_OK)
-#         for key in payload:
-#             if key == "route":
-#                 self.assertEqual(payload[key], flight.route.id)
-#             elif key == "airplane":
-#                 self.assertEqual(payload[key], flight.airplane.id)
-#             else:
-#                 self.assertEqual(payload[key], getattr(flight, key))
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
+        for key in payload:
+            if key == "route":
+                self.assertEqual(payload[key], flight.route.id)
+            elif key == "airplane":
+                self.assertEqual(payload[key], flight.airplane.id)
+            else:
+                self.assertEqual(payload[key], getattr(flight, key))
 
-#     def test_delete_flight(self) -> None:
-#         url = reverse("airport:flight-detail", args=[self.flight1.id])
-#         res = self.client.delete(url)
+    def test_delete_flight(self) -> None:
+        url = reverse("airport:flight-detail", args=[self.flight1.id])
+        res = self.client.delete(url)
 
-#         self.assertEqual(res.status_code, status.HTTP_204_NO_CONTENT)
+        self.assertEqual(res.status_code, status.HTTP_204_NO_CONTENT)
