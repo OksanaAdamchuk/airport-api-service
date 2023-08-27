@@ -158,9 +158,8 @@ class FlightViewSet(viewsets.ModelViewSet):
     permission_classes = (IsAdminOrReadOnly,)
 
     def get_queryset(self) -> QuerySet:
-        queryset = (
-            self.queryset.prefetch_related("crews__role")
-            .select_related("route__source__country", "route__destination__country", "airplane")
+        queryset = self.queryset.prefetch_related("crews__role").select_related(
+            "route__source__country", "route__destination__country", "airplane"
         )
 
         route = self.request.query_params.get("route")

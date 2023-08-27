@@ -2,6 +2,7 @@ from datetime import datetime, timezone
 from django.test import TestCase
 from django.urls import reverse
 from django.contrib.auth import get_user_model
+from django.db.models import Count, F
 from rest_framework.test import APIClient
 from rest_framework import status
 
@@ -70,24 +71,29 @@ class PublicFlightApiTest(TestCase):
 
     def test_list_flights(self) -> None:
         res = self.client.get(FLIGHTS_URL)
-        flights = Flight.objects.all()
+        flights = Flight.objects.annotate(
+            tickets_available=(
+                (F("airplane__rows") * F("airplane__seats_in_row")) - Count("tickets")
+            )
+        )
         serializer = FlightListSerializer(flights, many=True)
 
         self.assertEqual(res.status_code, status.HTTP_200_OK)
-        print("Expected:")
-        print(res.data["results"])
-        print("Actual:")
-        print(serializer.data)
         self.assertEqual(res.data["results"], serializer.data)
 
     def test_filter_flights_by_route_id(self) -> None:
         res = self.client.get(FLIGHTS_URL, {"route": f"{self.route2.id}"})
 
-        serializer1 = FlightListSerializer(self.flight1)
-        serializer2 = FlightListSerializer(self.flight2)
+        matching_flights = Flight.objects.filter(route=self.route2).annotate(
+            tickets_available=(
+                (F("airplane__rows") * F("airplane__seats_in_row")) - Count("tickets")
+            )
+        )
 
-        self.assertNotIn(serializer1.data, res.data["results"])
-        self.assertIn(serializer2.data, res.data["results"])
+        serializer = FlightListSerializer(matching_flights, many=True)
+
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
+        self.assertEqual(res.data["results"], serializer.data)
 
     def test_retrieve_flight_detail(self) -> None:
         url = reverse("airport:flight-detail", args=[self.flight1.id])
@@ -129,35 +135,27 @@ class PrivateFlightApiTest(TestCase):
             name="Test Boeing",
             rows=10,
             seats_in_row=6,
-            airplane_type=self.airplane_type
+            airplane_type=self.airplane_type,
         )
         self.country1 = Country.objects.create(name="Ukraine")
         self.country2 = Country.objects.create(name="Poland")
         self.airport1 = Airport.objects.create(
             name="Test Ukrainian Airport",
             closest_big_city="Kyiv",
-            country=self.country1
+            country=self.country1,
         )
         self.airport2 = Airport.objects.create(
-            name="Test Polish Airport",
-            closest_big_city="Krakow",
-            country=self.country2
+            name="Test Polish Airport", closest_big_city="Krakow", country=self.country2
         )
         self.route1 = Route.objects.create(
-            source=self.airport1,
-            destination=self.airport2,
-            distance=500
+            source=self.airport1, destination=self.airport2, distance=500
         )
         self.route2 = Route.objects.create(
-            source=self.airport2,
-            destination=self.airport1,
-            distance=500
+            source=self.airport2, destination=self.airport1, distance=500
         )
         self.role = Role.objects.create(name="pilot")
         self.crew = Crew.objects.create(
-            first_name="TestName",
-            last_name="TestSurname",
-            role=self.role
+            first_name="TestName", last_name="TestSurname", role=self.role
         )
         self.flight1 = Flight.objects.create(
             route=self.route1,
@@ -184,6 +182,7 @@ class PrivateFlightApiTest(TestCase):
 
         self.assertEqual(res.status_code, status.HTTP_403_FORBIDDEN)
 
+
 class AdminUserFlightApiTest(TestCase):
     def setUp(self) -> None:
         self.client = APIClient()
@@ -197,35 +196,27 @@ class AdminUserFlightApiTest(TestCase):
             name="Test Boeing",
             rows=10,
             seats_in_row=6,
-            airplane_type=self.airplane_type
+            airplane_type=self.airplane_type,
         )
         self.country1 = Country.objects.create(name="Ukraine")
         self.country2 = Country.objects.create(name="Poland")
         self.airport1 = Airport.objects.create(
             name="Test Ukrainian Airport",
             closest_big_city="Kyiv",
-            country=self.country1
+            country=self.country1,
         )
         self.airport2 = Airport.objects.create(
-            name="Test Polish Airport",
-            closest_big_city="Krakow",
-            country=self.country2
+            name="Test Polish Airport", closest_big_city="Krakow", country=self.country2
         )
         self.route1 = Route.objects.create(
-            source=self.airport1,
-            destination=self.airport2,
-            distance=500
+            source=self.airport1, destination=self.airport2, distance=500
         )
         self.route2 = Route.objects.create(
-            source=self.airport2,
-            destination=self.airport1,
-            distance=500
+            source=self.airport2, destination=self.airport1, distance=500
         )
         self.role = Role.objects.create(name="pilot")
         self.crew = Crew.objects.create(
-            first_name="TestName",
-            last_name="TestSurname",
-            role=self.role
+            first_name="TestName", last_name="TestSurname", role=self.role
         )
         self.flight1 = Flight.objects.create(
             route=self.route1,
