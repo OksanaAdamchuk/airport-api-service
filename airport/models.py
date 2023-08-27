@@ -1,5 +1,3 @@
-from types import NoneType
-from typing import Iterable, Optional
 from django.db import models
 from django.conf import settings
 from django.forms import ValidationError

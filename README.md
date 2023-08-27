@@ -46,22 +46,20 @@ pip install -r requirements.txt
 ```
 
 ### Configuration
-Create a .env file in the project root directory and set your configuration variables:
-```env
-SECRET_KEY=your_secret_key_here
-```
 
-Migrate the database:
+- Create a .env file in the project root directory and set your configuration variables
+
+- Migrate the database:
 ```shell
 python manage.py migrate
 ```
 
-Create a superuser account:
+- Create a superuser account:
 ```shell
 python manage.py createsuperuser
 ```
 
-Start the development server:
+- Start the development server:
 ```shell
 python manage.py runserver
 ```
