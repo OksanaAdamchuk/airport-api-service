@@ -26,7 +26,7 @@ class Crew(models.Model):
         ordering = ["role", "last_name"]
 
     def __str__(self) -> str:
-        return f"{self.first_name} {self.last_name} ({self.role})"
+        return f"{self.full_name} ({self.role})"
 
 
 class Country(models.Model):
