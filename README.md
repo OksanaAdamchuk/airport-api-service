@@ -1,4 +1,4 @@
-# Airport API Service 
+# SkyGate API (Airport API Service) 
 
 The Airport API Service is a Django REST framework-based project designed to track flights from airports worldwide. This API allows you to retrieve information about airports, airplanes, flights, routes and crew members, making it a valuable tool for managing and analyzing flight data. Registered user can make an order for few or more flight tickets.
 
